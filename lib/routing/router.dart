@@ -1,0 +1,49 @@
+import 'package:river/http/request.dart';
+import 'package:river/http/response.dart';
+import 'package:river/routing/route.dart';
+
+class Router {
+  final List<Route> _routes = [];
+
+  void get(String path, Function handler) =>
+      _add(method: 'GET', path: path, handler: handler);
+
+  void post(String path, Function handler) =>
+      _add(method: 'POST', path: path, handler: handler);
+
+  void put(String path, Function handler) =>
+      _add(method: 'PUT', path: path, handler: handler);
+
+  void patch(String path, Function handler) =>
+      _add(method: 'PATCH', path: path, handler: handler);
+
+  void delete(String path, Function handler) =>
+      _add(method: 'DELETE', path: path, handler: handler);
+
+  void all(String path, Function handler) =>
+      _add(method: '*', path: path, handler: handler);
+
+  void _add({
+    required String method,
+    required String path,
+    required Function handler,
+  }) {
+    _routes.add(Route(method: method, path: path, handler: handler));
+  }
+
+  Future<void> dispatch(Request req, Response res) async {
+    for (final route in _routes) {
+      if (route.match(req.method, req.path)) {
+        final params = route.extractParams(req.path);
+
+        final requestWithParams = Request(req.raw, params: params);
+
+        await route.handler(requestWithParams, res);
+
+        return;
+      }
+    }
+
+    res.status(404).json({'error': 'Not Found'});
+  }
+}
