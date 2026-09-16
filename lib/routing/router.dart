@@ -38,24 +38,28 @@ class Router {
   }
 
   Future<void> dispatch(Request req, Response res) async {
+    // 1. Run middlewares
     for (final middleware in _middlewares) {
-      middleware(req, res);
+      await middleware(req, res);
+
+      if (res.ended) return;
     }
 
+    // 2. Find and run route
     for (final route in _routes) {
       if (route.match(req.method, req.path)) {
         final params = route.extractParams(req.path);
 
         final requestWithParams = Request(req.raw, params: params);
-
         requestWithParams.body = req.body;
 
         await route.handler(requestWithParams, res);
-
         return;
       }
     }
 
-    res.status(404).json({'error': 'Not Found'});
+    if (!res.ended) {
+      res.status(404).json({'error': 'Not Found'});
+    }
   }
 }
