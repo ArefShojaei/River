@@ -5,9 +5,19 @@ version: 1.0.0
 homepage: https://github.com/ArefShojaei/River
 repository: https://github.com/ArefShojaei/River
 issue_tracker: https://github.com/ArefShojaei/River/issues
+documentation: https://github.com/ArefShojaei/River#readme
+
+license: MIT
+
+topics:
+  - dart
+  - http
+  - server
+  - websocket
+  - routing
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=3.6.0 <4.0.0"
 
 dependencies:
   path: ^1.9.0
