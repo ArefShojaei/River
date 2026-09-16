@@ -35,7 +35,7 @@ dart pub get
 import 'package:river/river.dart';
 
 void main() async {
-  final app = await Http.createServer(port: 3000);
+  final app = await River.createServer(port: 3000);
 
   app.get('/', (Request req, Response res) async {
     res.json({'message': 'Hello from River!'});
