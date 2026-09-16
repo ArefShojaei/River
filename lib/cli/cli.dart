@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:river/cli/command.dart';
 import 'package:river/cli/console.dart';
+import 'package:river/types.dart';
 
 class Cli {
   final String name;
@@ -13,7 +14,7 @@ class Cli {
   void command({
     required String name,
     required String description,
-    required Function handler,
+    required CliHandler handler,
     List<String> aliases = const [],
   }) {
     _commands.add(

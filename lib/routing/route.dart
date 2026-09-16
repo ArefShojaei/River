@@ -1,7 +1,9 @@
+import 'package:river/types.dart';
+
 class Route {
   final String method;
   final String path;
-  final Function handler;
+  final HttpHandler handler;
 
   late final RegExp _regex;
   late final List<String> _paramNames;
