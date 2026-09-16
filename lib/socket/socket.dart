@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:river/types.dart';
+
 class Socket {
   final WebSocket _ws;
   final String id;
-  final Map<String, List<Function>> _events = {};
+  final Map<String, List<SocketHandler>> _events = {};
   final Map<String, dynamic> data = {};
 
   Socket(this._ws) : id = DateTime.now().microsecondsSinceEpoch.toString() {
@@ -15,11 +17,11 @@ class Socket {
     );
   }
 
-  void on(String event, Function handler) {
+  void on(String event, SocketHandler handler) {
     _events.putIfAbsent(event, () => []).add(handler);
   }
 
-  void off(String event, [Function? handler]) {
+  void off(String event, [SocketHandler? handler]) {
     if (handler == null) {
       _events.remove(event);
     } else {
@@ -56,13 +58,7 @@ class Socket {
     if (handlers == null) return;
 
     for (final handler in List.from(handlers)) {
-      if (handler is Function(dynamic)) {
-        handler(data);
-      } else if (handler is Function()) {
-        handler();
-      } else if (handler is Function(Socket, dynamic)) {
-        handler(this, data);
-      }
+      handler(data);
     }
   }
 }

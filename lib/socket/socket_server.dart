@@ -1,15 +1,16 @@
 import 'dart:io';
 
-import 'package:river/cli/console.dart';
 import 'package:river/socket/socket.dart';
+import 'package:river/cli/console.dart';
+import 'package:river/types.dart';
 
 class SocketServer {
   final Map<String, Socket> _clients = {};
-  final Map<String, List<Function>> _events = {};
+  final Map<String, List<SocketHandler>> _events = {};
   final Map<String, Set<String>> _rooms = {};
   HttpServer? _server;
 
-  void on(String event, Function handler) {
+  void on(String event, SocketHandler handler) {
     _events.putIfAbsent(event, () => []).add(handler);
   }
 
@@ -17,6 +18,14 @@ class SocketServer {
     for (final socket in _clients.values) {
       socket.emit(event, data);
     }
+  }
+
+  void onConnection(SocketConnectionHandler handler) {
+    on('connection', (data) => handler(data as Socket));
+  }
+
+  void onDisconnect(SocketConnectionHandler handler) {
+    on('disconnect', (data) => handler(data as Socket));
   }
 
   void emitExcept(Socket except, String event, [dynamic data]) {
