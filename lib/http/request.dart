@@ -18,9 +18,7 @@ class Request {
   String? header(String name) => raw.headers.value(name);
 
   Future<String> text() async {
-    final bytes = await raw.fold<List<int>>([], (p, c) => p..addAll(c));
-
-    return utf8.decode(bytes);
+    return await utf8.decoder.bind(raw).join();
   }
 
   Future<dynamic> json() async {

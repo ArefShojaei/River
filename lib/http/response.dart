@@ -21,10 +21,12 @@ class Response {
     return this;
   }
 
-  void json(Object? data, {int statusCode = 200}) {
+  void json(Object? data, {int? statusCode}) {
     if (_ended) return;
 
-    _raw.statusCode = statusCode;
+    if (statusCode != null) {
+      _raw.statusCode = statusCode;
+    }
 
     _raw.headers.contentType = ContentType.json;
 
@@ -33,10 +35,12 @@ class Response {
     end();
   }
 
-  void send(Object? data, {int statusCode = 200}) {
+  void send(Object? data, {int? statusCode}) {
     if (_ended) return;
 
-    _raw.statusCode = statusCode;
+    if (statusCode != null) {
+      _raw.statusCode = statusCode;
+    }
 
     if (data is String) {
       _raw.headers.contentType ??= ContentType.text;
@@ -52,7 +56,9 @@ class Response {
   void end([String? data]) {
     if (_ended) return;
 
-    if (data != null) _raw.write(data);
+    if (data != null) {
+      _raw.write(data);
+    }
 
     _raw.close();
 
