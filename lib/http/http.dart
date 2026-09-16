@@ -23,6 +23,7 @@ class Http {
     return Http._(server, host, port);
   }
 
+  void use(HttpHandler handler) => _router.use(handler);
   void get(String path, HttpHandler handler) => _router.get(path, handler);
   void post(String path, HttpHandler handler) => _router.post(path, handler);
   void put(String path, HttpHandler handler) => _router.put(path, handler);
