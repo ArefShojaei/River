@@ -37,20 +37,4 @@ class Console {
   static void title(String text) {
     stdout.writeln('\n$_bold$_blue$text$_reset\n');
   }
-
-  static void table(List<List<String>> rows) {
-    if (rows.isEmpty) return;
-
-    final colWidths = List.generate(
-      rows[0].length,
-      (i) => rows.map((r) => r[i].length).reduce((a, b) => a > b ? a : b),
-    );
-
-    for (final row in rows) {
-      final line = row.asMap().entries.map((e) {
-        return e.value.padRight(colWidths[e.key]);
-      }).join('  │  ');
-      stdout.writeln(line);
-    }
-  }
 }
