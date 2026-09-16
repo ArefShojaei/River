@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:river/cli/cli_exception.dart';
 import 'package:river/cli/command.dart';
 import 'package:river/cli/console.dart';
 import 'package:river/types.dart';
@@ -53,6 +54,9 @@ class Cli {
 
     try {
       await command.handler(args, flags);
+    } on CliException catch (e) {
+      Console.error(e.message);
+      exit(e.exitCode);
     } catch (e, stack) {
       Console.error('Command failed: $e');
       Console.debug(stack.toString());

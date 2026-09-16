@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:river/http/http_exception.dart';
 import 'package:river/cli/console.dart';
 import 'package:river/http/request.dart';
 import 'package:river/http/response.dart';
@@ -24,6 +25,7 @@ class Http {
   }
 
   void use(HttpHandler handler) => _router.use(handler);
+
   void get(String path, HttpHandler handler) => _router.get(path, handler);
   void post(String path, HttpHandler handler) => _router.post(path, handler);
   void put(String path, HttpHandler handler) => _router.put(path, handler);
@@ -40,17 +42,27 @@ class Http {
       final res = Response(raw.response);
 
       try {
-        if (['POST', 'PUT', 'PATCH', 'DELETE'].contains(req.method)) {
-          final contentType = req.header('content-type') ?? '';
+        final contentType = req.header('content-type') ?? '';
 
-          if (contentType.contains('application/json')) {
-            req.body = await req.json();
-          }
+        if (contentType.contains('application/json')) {
+          req.body = await req.json();
+        } else if (contentType.contains('application/x-www-form-urlencoded') ||
+            contentType.contains('text/plain')) {
+          req.body = await req.text();
         }
 
         await _router.dispatch(req, res);
+      } on HttpException catch (e) {
+        // Controlled HTTP error thrown by user
+        if (!res.ended) {
+          res.status(e.statusCode).json({
+            'error': e.message,
+            if (e.data != null) 'data': e.data,
+          });
+        }
       } catch (e, stack) {
-        Console.error('Error: $e\n$stack');
+        // Unexpected errors
+        Console.error('Unhandled error: $e\n$stack');
 
         if (!res.ended) {
           res.status(500).json({
