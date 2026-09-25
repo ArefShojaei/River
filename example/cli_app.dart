@@ -14,9 +14,7 @@ void main(List<String> args) async {
 
       final app = await River.createHttpServer(port: port);
 
-      app.get('/', (req, res) async {
-        res.json({'message': 'Server is running'});
-      });
+      app.get('/', (req, res) => res.json({'message': 'Server is running'}));
 
       await app.listen();
     },
