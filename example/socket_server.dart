@@ -1,29 +1,30 @@
 import 'package:river/river.dart';
 
 void main() async {
-  final io = River.createSocketServer();
+  final server = River.createSocketServer();
 
-  io.onConnection((socket) {
-    Console.success('Connected: ${socket.id}');
-
-    socket.emit('welcome', {
-      'message': 'Hello from River!',
-      'id': socket.id,
-    });
-
-    socket.on('chat', (data) {
-      Console.info('Message: $data');
-
-      io.emit('chat', {
-        'from': socket.id,
-        'message': data,
-      });
-    });
-
-    socket.on('disconnect', (_) {
-      Console.warn('Disconnected: ${socket.id}');
-    });
+  // Triggered when a new client connects
+  server.onConnection((client) {
+    print('Client connected');
+    server.emit(client, 'welcome', 'Welcome to the server!');
   });
 
-  await io.listen(3001);
+  // Triggered when a client disconnects
+  server.onDisconnect((client) {
+    print('Client disconnected');
+  });
+
+  // Listen for join event
+  server.on('join', (name) {
+    print('$name joined the chat');
+    server.broadcast('system', '$name joined the chat');
+  });
+
+  // Listen for chat messages and broadcast them
+  server.on('chat', (message) {
+    print('Message: $message');
+    server.broadcast('new_message', message);
+  });
+
+  await server.listen();
 }
