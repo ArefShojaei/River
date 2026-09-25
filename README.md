@@ -28,7 +28,7 @@ River makes it easy to build fast, clean, and structured server-side application
 
 ```yaml
 dependencies:
-  river: ^1.0.0
+  river: ^1.1.0
 ```
 
 ```bash
@@ -45,7 +45,7 @@ Package on pub.dev: [https://pub.dev/packages/river](https://pub.dev/packages/ri
 import 'package:river/river.dart';
 
 void main() async {
-  final app = await River.createHttpServer(port: 3000);
+  final app = await River.createHttpServer();
 
   app.get('/', (req, res) async {
     res.json({'message': 'Hello from River!'});
@@ -64,6 +64,8 @@ void main() async {
       'body': req.body,
     });
   });
+
+  // 404 is automatically handled by the framework.
 
   await app.listen();
 }
@@ -140,17 +142,17 @@ app.use(corsMiddleware);
 
 ### Request
 
-| Property / Method    | Description                          |
-|----------------------|--------------------------------------|
-| `req.method`         | HTTP method (`GET`, `POST`, ...)     |
-| `req.path`           | Request path (`/users/123`)          |
-| `req.url`            | Full URL                             |
+| Property / Method    | Description                              |
+| -------------------- | ---------------------------------------- |
+| `req.method`         | HTTP method (`GET`, `POST`, ...)         |
+| `req.path`           | Request path (`/users/123`)              |
+| `req.url`            | Full URL                                 |
 | `req.query`          | Query parameters (`Map<String, String>`) |
 | `req.params`         | Route parameters (`Map<String, String>`) |
-| `req.body`           | Parsed JSON body                     |
-| `req.header('name')` | Get a header value                   |
-| `req.text()`         | Raw body as `String`                 |
-| `req.json()`         | Parse body as JSON                   |
+| `req.body`           | Parsed JSON body                         |
+| `req.header('name')` | Get a header value                       |
+| `req.text()`         | Raw body as `String`                     |
+| `req.json()`         | Parse body as JSON                       |
 
 ### Response
 
@@ -165,56 +167,80 @@ res.end();                                // end response
 
 ---
 
-## WebSocket
+## Socket (TCP)
+
+> Server
 
 ```dart
-final io = River.createSocketServer();
+final server = River.createSocketServer();
 
-io.onConnection((socket) {
-  print('Client connected: ${socket.id}');
-
-  socket.emit('welcome', {'message': 'Hello!'});
-
-  socket.on('chat', (data) {
-    io.emit('chat', {
-      'from': socket.id,
-      'message': data,
-    });
-  });
-
-  socket.on('disconnect', (_) {
-    print('Client disconnected: ${socket.id}');
-  });
+// Triggered when a new client connects
+server.onConnection((client) {
+  print('Client connected');
+  server.emit(client, 'welcome', 'Welcome to the server!');
 });
 
-await io.listen(3001); // ws://localhost:3001/ws
+// Triggered when a client disconnects
+server.onDisconnect((client) {
+  print('Client disconnected');
+});
+
+// Listen for join event
+server.on('join', (name) {
+  print('$name joined the chat');
+  server.broadcast('system', '$name joined the chat');
+});
+
+// Listen for chat messages and broadcast them
+server.on('chat', (message) {
+  print('Message: $message');
+  server.broadcast('new_message', message);
+});
+
+await server.listen();
 ```
 
-### SocketServer API
+> Client
 
-| Method | Description |
-|--------|-------------|
-| `on(event, handler)` | Listen for an event |
-| `onConnection(handler)` | Listen for new connections |
-| `onDisconnect(handler)` | Listen for disconnects |
-| `emit(event, [data])` | Broadcast to all clients |
-| `emitExcept(socket, event, [data])` | Broadcast to all except one |
-| `to(room, event, [data])` | Send to a room |
-| `join(socket, room)` | Add socket to a room |
-| `leave(socket, room)` | Remove socket from a room |
-| `listen(port, {host, path})` | Start the server |
-| `close()` | Close the server |
+```dart
+final client = River.createSocketConnector();
 
-### Socket API
+client.on('connect', (_) {
+  print('Connected to server');
 
-| Method | Description |
-|--------|-------------|
-| `socket.id` | Unique client ID |
-| `socket.on(event, handler)` | Listen for events |
-| `socket.off(event)` | Remove listener |
-| `socket.emit(event, [data])` | Send event to this client |
-| `socket.disconnect()` | Close connection |
-| `socket.data` | Custom data storage |
+  // Join the chat after connecting
+  client.emit('join', 'Ali');
+
+  // Send a chat message
+  client.emit('chat', 'Hello everyone!');
+});
+
+client.on('disconnect', (_) {
+  print('Disconnected from server');
+});
+
+client.on('connect_error', (error) {
+  print('Connection error: $error');
+});
+
+client.on('welcome', (message) {
+  print('Server: $message');
+});
+
+client.on('system', (message) {
+  print('System: $message');
+});
+
+client.on('new_message', (message) {
+  print('New message: $message');
+});
+
+await client.connect();
+
+// Keep the connection alive for a few seconds
+await Future.delayed(const Duration(seconds: 5));
+await client.disconnect();
+```
 
 ---
 
@@ -235,9 +261,7 @@ void main(List<String> args) async {
 
       final app = await River.createHttpServer(port: port);
 
-      app.get('/', (req, res) async {
-        res.json({'status': 'ok'});
-      });
+      app.get('/', (req, res) => res.json({'message': 'Server is running'}));
 
       await app.listen();
     },
@@ -274,9 +298,10 @@ Console.log('Normal message');
 
 See the [`example/`](example/) folder:
 
-- `http_server.dart` — HTTP only
-- `socket_server.dart` — WebSocket only
 - `cli_app.dart` — CLI example
+- `http_server.dart` — HTTP only
+- `socket_server.dart` — Socket server only
+- `socket_client.dart` — Socket client only
 
 ---
 

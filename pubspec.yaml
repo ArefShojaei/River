@@ -1,6 +1,6 @@
 name: river
 description: A lightweight Express-like HTTP & WebSocket framework for Dart with built-in CLI support.
-version: 1.0.0
+version: 1.1.0
 
 homepage: https://github.com/ArefShojaei/River
 repository: https://github.com/ArefShojaei/River
