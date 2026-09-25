@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:river/http/request.dart';
 import 'package:river/http/response.dart';
-import 'package:river/socket/socket.dart';
 
 /// HTTP route handler
 typedef HttpHandler = FutureOr<void> Function(Request req, Response res);
@@ -13,8 +13,9 @@ typedef CliHandler = FutureOr<void> Function(
   Map<String, String> flags,
 );
 
-/// Socket event handler
-typedef SocketHandler = void Function(dynamic data);
+/// Socket tcp handlers
+typedef SocketEventHandler = void Function(dynamic data);
 
-// Socket connection handler
-typedef SocketConnectionHandler = void Function(Socket socket);
+typedef SocketConnectionHandler = void Function(Socket client);
+
+typedef SocketErrorHandler = void Function(Object error);

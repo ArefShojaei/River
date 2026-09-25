@@ -17,9 +17,9 @@ export 'cli/command.dart';
 export 'cli/console.dart';
 export 'cli/cli_exception.dart';
 
-// Socket
-export 'socket/socket.dart';
+// Socket (TCP)
 export 'socket/socket_server.dart';
+export 'socket/socket_client.dart';
 
 // River
 export 'app.dart';

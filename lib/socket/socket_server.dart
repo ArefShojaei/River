@@ -1,23 +1,77 @@
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:river/socket/socket.dart';
 import 'package:river/cli/console.dart';
 import 'package:river/types.dart';
 
 class SocketServer {
-  final Map<String, Socket> _clients = {};
-  final Map<String, List<SocketHandler>> _events = {};
-  final Map<String, Set<String>> _rooms = {};
-  HttpServer? _server;
+  final String host;
+  final int port;
 
-  void on(String event, SocketHandler handler) {
-    _events.putIfAbsent(event, () => []).add(handler);
+  ServerSocket? _server;
+  final List<Socket> _clients = [];
+  final Map<String, List<SocketEventHandler>> _events = {};
+
+  SocketServer({this.host = '0.0.0.0', this.port = 4040});
+
+  Future<void> listen() async {
+    _server = await ServerSocket.bind(host, port);
+    Console.info('✅ Server started on $host:$port');
+
+    _server!.listen((Socket client) {
+      _clients.add(client);
+      Console.info('👤 Client connected (${_clients.length})');
+
+      // Register local event
+      _emitLocal('connection', client);
+
+      utf8.decoder.bind(client).transform(const LineSplitter()).listen(
+            (line) {
+              if (line.trim().isEmpty) return;
+
+              try {
+                final json = jsonDecode(line) as Map<String, dynamic>;
+                final event = json['e'] as String?;
+                final data = json['d'];
+
+                if (event != null) {
+                  // Register local event
+                  _emitLocal(event, data, client: client);
+                }
+              } catch (e) {
+                Console.error('Invalid message: $e');
+
+                // Register local event
+                _emitLocal('error', e, client: client);
+              }
+            },
+            onDone: () => _handleDisconnect(client),
+            onError: (e) {
+              Console.error('Client error: $e');
+
+              // Register local event
+              _emitLocal('error', e, client: client);
+
+              _handleDisconnect(client);
+            },
+            cancelOnError: true,
+          );
+    });
   }
 
-  void emit(String event, [dynamic data]) {
-    for (final socket in _clients.values) {
-      socket.emit(event, data);
+  void _handleDisconnect(Socket client) {
+    if (_clients.remove(client)) {
+      Console.warn('👋 Client disconnected (${_clients.length})');
+
+      // Register local event
+      _emitLocal('disconnect', client);
+
+      client.destroy();
     }
+  }
+
+  void on(String event, SocketEventHandler handler) {
+    _events.putIfAbsent(event, () => []).add(handler);
   }
 
   void onConnection(SocketConnectionHandler handler) {
@@ -28,80 +82,56 @@ class SocketServer {
     on('disconnect', (data) => handler(data as Socket));
   }
 
-  void emitExcept(Socket except, String event, [dynamic data]) {
-    for (final socket in _clients.values) {
-      if (socket.id != except.id) {
-        socket.emit(event, data);
+  void emit(Socket client, String event, [dynamic data]) {
+    _send(client, event, data);
+  }
+
+  void broadcast(String event, [dynamic data]) {
+    for (final client in List.of(_clients)) {
+      _send(client, event, data);
+    }
+  }
+
+  void broadcastExcept(Socket except, String event, [dynamic data]) {
+    for (final client in List.of(_clients)) {
+      if (client != except) {
+        _send(client, event, data);
       }
     }
   }
 
-  void to(String room, String event, [dynamic data]) {
-    final members = _rooms[room];
-    if (members == null) return;
+  void _send(Socket client, String event, [dynamic data]) {
+    try {
+      final msg = jsonEncode({'e': event, 'd': data});
 
-    for (final id in members) {
-      _clients[id]?.emit(event, data);
+      client.write('$msg\n');
+    } catch (e) {
+      Console.error('Failed to send: $e');
     }
   }
 
-  void join(Socket socket, String room) {
-    _rooms.putIfAbsent(room, () => {}).add(socket.id);
-  }
-
-  void leave(Socket socket, String room) {
-    _rooms[room]?.remove(socket.id);
-  }
-
-  Future<void> listen(
-    int port, {
-    String host = 'localhost',
-    String path = '/ws',
-  }) async {
-    _server = await HttpServer.bind(host, port);
-    Console.info('🔌 Socket server running on ws://$host:$port$path');
-
-    await for (final request in _server!) {
-      if (request.uri.path == path) {
-        final ws = await WebSocketTransformer.upgrade(request);
-        final socket = Socket(ws);
-
-        _clients[socket.id] = socket;
-
-        socket.on('disconnect', (_) {
-          _clients.remove(socket.id);
-
-          for (final room in _rooms.values) {
-            room.remove(socket.id);
-          }
-
-          _emitLocal('disconnect', socket);
-        });
-
-        _emitLocal('connection', socket);
-      } else {
-        request.response
-          ..statusCode = HttpStatus.notFound
-          ..write('Not a WebSocket endpoint')
-          ..close();
-      }
-    }
-  }
-
-  Future<void> close() async {
-    for (final socket in _clients.values) {
-      await socket.disconnect();
-    }
-    await _server?.close(force: true);
-  }
-
-  void _emitLocal(String event, [dynamic data]) {
+  void _emitLocal(String event, dynamic data, {Socket? client}) {
     final handlers = _events[event];
-
     if (handlers == null) return;
 
-    for (final handler in List.from(handlers)) {
-      handler(data);
+    for (final handler in List.of(handlers)) {
+      if (event == 'connection' || event == 'disconnect') {
+        handler(client ?? data);
+      } else {
+        handler(data);
+      }
     }
+  }
+
+  Future<void> stop() async {
+    for (final client in List.of(_clients)) {
+      await client.close();
+    }
+
+    _clients.clear();
+
+    await _server?.close();
+
+    Console.info('🛑 Server stopped');
   }
 }
