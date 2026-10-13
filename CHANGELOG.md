@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.1 - 2026-10-13
+
+### Fixed
+- Fixed Request body reading: `text()` and `json()` are now cached and can be called multiple times safely
+- Fixed CLI `--help` / `-h` not working
+- Unified default host values across HTTP and Socket servers
+
+### Changed
+- Default host for HTTP server changed from `localhost` to `0.0.0.0`
+- Default host for Socket server set to `0.0.0.0`
+- Socket client remains `127.0.0.1`
+- README updated: corrected WebSocket claims to TCP Socket
+
+### Added
+- `Http.close()` method for graceful server shutdown
+- Better error handling in `Request.json()` (throws `FormatException` on invalid JSON)
+
 ## 1.1.0 - 2026-09-25
 
 ### Added

@@ -7,6 +7,9 @@ class Request {
   late final Map<String, String> query;
   dynamic body;
 
+  String? _cachedText;
+  bool _bodyRead = false;
+
   Request(this.raw, {this.params = const {}}) {
     query = raw.uri.queryParameters;
   }
@@ -18,7 +21,13 @@ class Request {
   String? header(String name) => raw.headers.value(name);
 
   Future<String> text() async {
-    return await utf8.decoder.bind(raw).join();
+    if (_cachedText != null) return _cachedText!;
+
+    if (_bodyRead) return '';
+
+    _bodyRead = true;
+    _cachedText = await utf8.decoder.bind(raw).join();
+    return _cachedText!;
   }
 
   Future<dynamic> json() async {
@@ -26,6 +35,10 @@ class Request {
 
     if (content.isEmpty) return null;
 
-    return jsonDecode(content);
+    try {
+      return jsonDecode(content);
+    } catch (e) {
+      throw FormatException('Invalid JSON body: $e');
+    }
   }
 }

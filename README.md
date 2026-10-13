@@ -1,6 +1,6 @@
 # River
 
-A lightweight **Express-like** HTTP & WebSocket framework for Dart with built-in CLI support.
+A lightweight **Express-like** HTTP & Socket (TCP) framework for Dart with built-in CLI support.
 
 River makes it easy to build fast, clean, and structured server-side applications in pure Dart — with almost zero external dependencies.
 
@@ -18,7 +18,7 @@ River makes it easy to build fast, clean, and structured server-side application
 - Middleware support
 - Automatic JSON body parsing
 - Clean `Request` & `Response` API
-- Built-in WebSocket server with rooms
+- Built-in TCP Socket server & client (JSON line-based protocol)
 - Powerful CLI system with colored console output
 - Extremely lightweight (only depends on `path`)
 
@@ -28,7 +28,7 @@ River makes it easy to build fast, clean, and structured server-side application
 
 ```yaml
 dependencies:
-  river: ^1.1.0
+  river: ^1.1.1
 ```
 
 ```bash

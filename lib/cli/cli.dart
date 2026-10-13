@@ -31,7 +31,6 @@ class Cli {
   Future<void> run(List<String> arguments) async {
     if (arguments.isEmpty) {
       _welcome();
-
       return;
     }
 
@@ -40,10 +39,16 @@ class Cli {
       return;
     }
 
+    if (arguments.contains('--help') || arguments.contains('-h')) {
+      _welcome();
+      return;
+    }
+
     final cmdName = arguments.first;
     final remaining = arguments.skip(1).toList();
 
     final command = _findCommand(cmdName);
+
     if (command == null) {
       Console.error('Unknown command: $cmdName');
       Console.log('Run "$name --help" for available commands.');
@@ -79,8 +84,10 @@ class Cli {
 
     for (var i = 0; i < input.length; i++) {
       final item = input[i];
+
       if (item.startsWith('--')) {
         final key = item.substring(2);
+
         if (i + 1 < input.length && !input[i + 1].startsWith('-')) {
           flags[key] = input[++i];
         } else {
@@ -88,6 +95,7 @@ class Cli {
         }
       } else if (item.startsWith('-') && item.length == 2) {
         final key = item.substring(1);
+        
         if (i + 1 < input.length && !input[i + 1].startsWith('-')) {
           flags[key] = input[++i];
         } else {

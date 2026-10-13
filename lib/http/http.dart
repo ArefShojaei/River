@@ -34,6 +34,12 @@ class Http {
       _router.delete(path, handler);
   void all(String path, HttpHandler handler) => _router.all(path, handler);
 
+  Future<void> close() async {
+    await _server.close(force: true);
+
+    Console.info('Server stopped');
+  }
+
   Future<void> listen() async {
     Console.info('Server is running at http://$_host:$_port');
 

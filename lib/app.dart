@@ -5,22 +5,24 @@ import 'package:river/socket/socket_client.dart';
 
 class River {
   static Future<Http> createHttpServer({
-    String host = 'localhost',
+    String host = '0.0.0.0',
     int port = 8080,
   }) =>
       Http.createServer(host: host, port: port);
 
   static SocketServer createSocketServer({
-    String host = 'localhost',
+    String host = '0.0.0.0',
     int port = 4040,
-  }) => SocketServer(host: host, port: port);
+  }) =>
+      SocketServer(host: host, port: port);
 
   static SocketClient createSocketConnector({
-    String host = 'localhost',
+    String host = '127.0.0.1',
     int port = 4040,
-  }) => SocketClient(host: host, port: port);
+  }) =>
+      SocketClient(host: host, port: port);
 
   static Cli createCli(List<String> args,
-          {String name = 'app', String version = '1.0.0'}) =>
+          {String name = 'app', String version = '1.2.0'}) =>
       Cli(name: name, version: version);
 }
