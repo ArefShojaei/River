@@ -15,7 +15,6 @@ topics:
   - server
   - socket
   - tcp
-  - routing
   - cli
 
 environment:
